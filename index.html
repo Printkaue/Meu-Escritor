@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meu Escritor</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fff;--surface:#fff;--soft:#f2f2f2;--text:#111;--muted:#666;--line:#d8d8d8;--accent:#111;--on-accent:#fff}
+:root[data-theme="notes"]{--bg:#fffdf3;--surface:#fff;--soft:#fff4c2;--text:#000;--muted:#7a7458;--line:#ece3b5;--accent:#ffcc00;--on-accent:#000}
+:root[data-theme="dark"]{--bg:#000;--surface:#1c1c1e;--soft:#2c2c2e;--text:#f2f2f7;--muted:#98989f;--line:#38383a;--accent:#ffd60a;--on-accent:#000}
+header{flex-wrap:wrap}
+.ch .ed{border:none;background:transparent;padding:0 6px;opacity:.6;color:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--text);font:16px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px}
+button:hover{background:var(--soft)}
+button.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+button.primary:hover{filter:brightness(.92)}
+button.danger{color:#c0392b}
+input{font:inherit;color:inherit;background:transparent;border:none;outline:none;width:100%}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+header h1{font-size:18px;margin:0;flex:1;min-width:0}
+.themes{display:flex;gap:4px}
+.themes button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+/* Biblioteca */
+#library{padding:24px 16px;max-width:860px;margin:0 auto;width:100%;overflow:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:16px}
+.book{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:16px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;position:relative}
+.book:hover{border-color:var(--accent)}
+.book b{font-size:17px;word-break:break-word}
+.book small{color:var(--muted)}
+.book .x{position:absolute;top:8px;right:8px;padding:2px 8px;border:none;background:transparent;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:50px 10px}
+/* Editor */
+#editorView{flex:1;display:flex;min-height:0}
+aside{width:260px;border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;min-height:0}
+aside .top{padding:12px;border-bottom:1px solid var(--line)}
+#bookTitle{font-weight:700;font-size:18px}
+#chapters{flex:1;overflow:auto;padding:8px}
+.ch{padding:9px 10px;border-radius:8px;cursor:pointer;display:flex;gap:6px;align-items:center;word-break:break-word}
+.ch:hover{background:var(--soft)}
+.ch.on{background:var(--accent);color:var(--on-accent)}
+.ch span{flex:1}
+.ch .x{border:none;background:transparent;padding:0 6px;opacity:.6;color:inherit}
+aside .bot{padding:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--surface);align-items:center}
+.toolbar button{min-width:36px;padding:6px 9px}
+.toolbar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.toolbar button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.page{flex:1;overflow:auto;padding:28px 16px}
+.sheet{max-width:720px;margin:0 auto}
+#chTitle{font-size:28px;font-weight:700;margin-bottom:14px}
+#editor{outline:none;min-height:60vh;font:19px/1.75 Georgia,"Times New Roman",serif;padding-bottom:40vh}
+#editor:empty::before{content:attr(data-ph);color:var(--muted)}
+#editor h1{font-size:1.6em;line-height:1.3}#editor h2{font-size:1.3em;line-height:1.3}
+#editor blockquote{border-left:4px solid var(--accent);margin:1em 0;padding:2px 16px;color:var(--muted)}
+.status{padding:6px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;background:var(--surface)}
+#menuBtn{display:none}
+.menu{position:relative}
+.menu .pop{display:none;position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;z-index:5;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.menu.open .pop{display:block}
+.pop button{display:block;width:100%;text-align:left;border:none}
+/* Modal e toast */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+.modal.show{display:flex}
+.modal .box{background:var(--surface);border-radius:14px;padding:22px;max-width:380px;width:100%}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);padding:9px 16px;border-radius:20px;display:none;z-index:11;font-size:14px}
+@media(max-width:700px){
+ aside{position:absolute;z-index:4;top:0;bottom:0;left:0;transform:translateX(-100%);transition:transform .2s;width:80%;max-width:300px;box-shadow:4px 0 20px rgba(0,0,0,.2)}
+ aside.open{transform:none}
+ #editorView{position:relative}
+ #menuBtn{display:inline-block}
+ #editor{font-size:18px}#chTitle{font-size:23px}
+}
+@media print{header,aside,.toolbar,.status{display:none!important}.page{overflow:visible}}
+</style>
+</head>
+<body>
+<div id="app">
+ <header>
+  <button id="menuBtn" title="Capítulos">☰</button>
+  <button id="backBtn" style="display:none">← Livros</button>
+  <h1 id="appTitle">📖 Meu Escritor</h1>
+  <div class="themes"><button data-t="light">Claro</button><button data-t="notes">Notas</button><button data-t="dark">Escuro</button></div>
+  <div class="menu" id="expMenu" style="display:none">
+   <button class="primary" id="expBtn">Exportar ▾</button>
+   <div class="pop">
+    <button data-f="txt">Texto (.txt)</button>
+    <button data-f="doc">Word (.doc)</button>
+    <button data-f="html">Página web (.html)</button>
+    <button data-f="print">Imprimir / salvar PDF</button>
+    <button data-f="copy">Copiar livro todo</button>
+   </div>
+  </div>
+ </header>
+
+ <section id="library">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+   <h2 style="margin:0">Meus livros</h2>
+   <button class="primary" id="newBook">+ Novo livro</button>
+  </div>
+  <div class="grid" id="grid"></div>
+ </section>
+
+ <section id="editorView" style="display:none">
+  <aside id="side">
+   <div class="top"><input id="bookTitle" placeholder="Título do livro"></div>
+   <div id="chapters"></div>
+   <div class="bot"><button class="primary" id="newCh">+ Novo capítulo</button></div>
+  </aside>
+  <main>
+   <div class="toolbar">
+    <button data-c="bold" title="Negrito"><b>N</b></button>
+    <button data-c="italic" title="Itálico"><i>I</i></button>
+    <button data-c="underline" title="Sublinhado"><u>S</u></button>
+    <span class="sep"></span>
+    <button data-c="formatBlock" data-v="h1">Título</button>
+    <button data-c="formatBlock" data-v="h2">Subtítulo</button>
+    <button data-c="formatBlock" data-v="p">Texto</button>
+    <span class="sep"></span>
+    <button data-c="justifyLeft" title="Esquerda">⇤</button>
+    <button data-c="justifyCenter" title="Centralizar">≡</button>
+    <button data-c="justifyFull" title="Justificar">☰</button>
+    <button data-c="insertUnorderedList" title="Lista">• Lista</button>
+    <button data-c="formatBlock" data-v="blockquote" title="Citação">❝</button>
+    <span class="sep"></span>
+    <button data-c="undo" title="Desfazer">↶</button>
+    <button data-c="redo" title="Refazer">↷</button>
+    <span class="sep"></span>
+    <button id="spell" class="on" title="Revisar erros ortográficos">✓ Ortografia</button>
+   </div>
+   <div class="page"><div class="sheet">
+    <input id="chTitle" placeholder="Título do capítulo">
+    <div id="editor" contenteditable="true" spellcheck="true" lang="pt-BR" data-ph="Comece a escrever sua história aqui..."></div>
+   </div></div>
+   <div class="status"><span id="count"></span><span id="saved">Salvo</span></div>
+  </main>
+ </section>
+</div>
+
+<div class="modal" id="modal"><div class="box"><b id="mTitle"></b><p id="mText" style="color:var(--muted)"></p>
+ <div class="row"><button id="mNo">Cancelar</button><button class="primary danger" id="mYes" style="background:#c0392b;color:#fff;border-color:#c0392b">Excluir</button></div></div></div>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const KEY='escritor:v1';
+let db={books:[],theme:'light'}, curBook=null, curCh=null, timer=null;
+try{const r=localStorage.getItem(KEY); if(r) db=JSON.parse(r);}catch(e){}
+const uid=()=>Math.random().toString(36).slice(2,10);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){} $('#saved').textContent='Salvo ✓';}
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2200);}
+function theme(t){db.theme=t;document.documentElement.dataset.theme=t;$$('.themes button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));save();}
+const book=()=>db.books.find(b=>b.id===curBook);
+const chap=()=>book()?.chapters.find(c=>c.id===curCh);
+const text=h=>{const d=document.createElement('div');d.innerHTML=h;return d.innerText||d.textContent||'';};
+const words=h=>(text(h).trim().match(/\S+/g)||[]).length;
+
+function confirmBox(title,msg,fn){$('#mTitle').textContent=title;$('#mText').textContent=msg;$('#modal').classList.add('show');$('#mYes').onclick=()=>{$('#modal').classList.remove('show');fn();};}
+$('#mNo').onclick=()=>$('#modal').classList.remove('show');
+
+function showLibrary(){
+ curBook=null;curCh=null;
+ $('#library').style.display='';$('#editorView').style.display='none';$('#backBtn').style.display='none';$('#expMenu').style.display='none';$('#appTitle').textContent='📖 Meu Escritor';
+ const g=$('#grid');g.innerHTML='';
+ if(!db.books.length){g.innerHTML='<div class="empty" style="grid-column:1/-1">Você ainda não tem livros.<br>Clique em “+ Novo livro” para começar. ✍️</div>';return;}
+ db.books.forEach(b=>{
+  const n=b.chapters.reduce((a,c)=>a+words(c.html),0);
+  const d=document.createElement('div');d.className='book';
+  d.innerHTML='<b></b><small>'+b.chapters.length+' capítulo(s) · '+n+' palavras</small><button class="x" title="Excluir livro">🗑</button>';
+  d.querySelector('b').textContent=b.title||'Sem título';
+  d.onclick=()=>openBook(b.id);
+  d.querySelector('.x').onclick=e=>{e.stopPropagation();confirmBox('Excluir livro?','“'+(b.title||'Sem título')+'” e todos os capítulos serão apagados para sempre.',()=>{db.books=db.books.filter(x=>x.id!==b.id);save();showLibrary();toast('Livro excluído');});};
+  g.appendChild(d);
+ });
+}
+function newBook(){const b={id:uid(),title:'',chapters:[{id:uid(),title:'Capítulo 1',html:''}]};db.books.unshift(b);save();openBook(b.id);$('#bookTitle').focus();}
+function openBook(id){
+ curBook=id;curCh=book().chapters[0].id;
+ $('#library').style.display='none';$('#editorView').style.display='flex';$('#backBtn').style.display='';$('#expMenu').style.display='';
+ $('#bookTitle').value=book().title;$('#appTitle').textContent='';
+ renderChapters();loadChapter();
+}
+function renderChapters(){
+ const w=$('#chapters');w.innerHTML='';
+ book().chapters.forEach((c,i)=>{
+  const d=document.createElement('div');d.className='ch'+(c.id===curCh?' on':'');
+  d.innerHTML='<span></span><button class="ed" title="Renomear capítulo">✎</button><button class="x" title="Excluir capítulo">✕</button>';
+  d.querySelector('.ed').onclick=e=>{e.stopPropagation();const sp=d.querySelector('span');const inp=document.createElement('input');inp.value=c.title;inp.style.cssText='border-bottom:1px solid currentColor;padding:2px';sp.replaceWith(inp);inp.focus();inp.select();inp.onclick=ev=>ev.stopPropagation();let ok=false;const done=()=>{if(ok)return;ok=true;c.title=inp.value.trim()||c.title;save();renderChapters();if(c.id===curCh)$('#chTitle').value=c.title;};inp.onblur=done;inp.onkeydown=ev=>{if(ev.key==='Enter')inp.blur();};};
+  d.querySelector('span').textContent=(c.title||'Capítulo '+(i+1));
+  d.onclick=()=>{flush();curCh=c.id;renderChapters();loadChapter();$('#side').classList.remove('open');};
+  d.querySelector('.x').onclick=e=>{e.stopPropagation();
+   if(book().chapters.length<2){toast('O livro precisa ter ao menos um capítulo');return;}
+   confirmBox('Excluir capítulo?','Esse capítulo será apagado para sempre.',()=>{const b=book();b.chapters=b.chapters.filter(x=>x.id!==c.id);if(curCh===c.id)curCh=b.chapters[0].id;save();renderChapters();loadChapter();});};
+  w.appendChild(d);
+ });
+}
+function loadChapter(){const c=chap();$('#chTitle').value=c.title;$('#editor').innerHTML=c.html;updCount();}
+function flush(){const c=chap();if(!c)return;c.html=$('#editor').innerHTML;c.title=$('#chTitle').value;book().title=$('#bookTitle').value;save();}
+function updCount(){const t=$('#editor').innerText.trim();const w=(t.match(/\S+/g)||[]).length;$('#count').textContent=w+' palavras · '+t.length+' caracteres';}
+function changed(){$('#saved').textContent='Salvando...';updCount();clearTimeout(timer);timer=setTimeout(flush,500);}
+$('#editor').addEventListener('input',changed);
+$('#chTitle').addEventListener('input',()=>{changed();const s=$('#chapters .on span');if(s)s.textContent=$('#chTitle').value||'Capítulo';});
+$('#bookTitle').addEventListener('input',changed);
+$('#newCh').onclick=()=>{flush();const b=book();const c={id:uid(),title:'Capítulo '+(b.chapters.length+1),html:''};b.chapters.push(c);curCh=c.id;save();renderChapters();loadChapter();$('#side').classList.remove('open');$('#editor').focus();};
+$('#newBook').onclick=newBook;
+$('#backBtn').onclick=()=>{flush();showLibrary();};
+$('#menuBtn').onclick=()=>$('#side').classList.toggle('open');
+$$('.themes button').forEach(b=>b.onclick=()=>theme(b.dataset.t));
+
+$$('.toolbar button[data-c]').forEach(b=>{
+ b.onmousedown=e=>e.preventDefault();
+ b.onclick=()=>{$('#editor').focus();let v=b.dataset.v;if(v)v='<'+v+'>';document.execCommand(b.dataset.c,false,v);changed();};
+});
+$('#spell').onclick=function(){const e=$('#editor');const on=!(e.spellcheck);e.spellcheck=on;this.classList.toggle('on',on);
+ e.blur();e.focus();toast(on?'Revisão ortográfica ligada: erros aparecem sublinhados em vermelho':'Revisão ortográfica desligada');};
+
+/* Exportar */
+$('#expBtn').onclick=e=>{e.stopPropagation();$('#expMenu').classList.toggle('open');};
+document.addEventListener('click',()=>$('#expMenu').classList.remove('open'));
+function dl(name,content,type){
+ try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Exportando '+name);}
+ catch(e){toast('Download bloqueado aqui. Use “Copiar livro todo”.');}
+}
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function bookHtml(){const b=book();return '<h1 style="text-align:center">'+esc(b.title||'Sem título')+'</h1>'+b.chapters.map(c=>'<h2>'+esc(c.title)+'</h2>'+c.html).join('');}
+function bookTxt(){const b=book();return (b.title||'Sem título')+'\n\n'+b.chapters.map(c=>c.title+'\n\n'+text(c.html).trim()).join('\n\n\n');}
+$$('#expMenu .pop button').forEach(b=>b.onclick=()=>{
+ flush();const f=b.dataset.f,n=(book().title||'livro').replace(/[^\wÀ-ÿ ]+/g,'').trim()||'livro';
+ const wrap=h=>'<html><head><meta charset="utf-8"><title>'+esc(book().title||'Livro')+'</title><style>body{font-family:Georgia,serif;font-size:13pt;line-height:1.6;max-width:700px;margin:auto}</style></head><body>'+h+'</body></html>';
+ if(f==='txt')dl(n+'.txt',bookTxt(),'text/plain;charset=utf-8');
+ else if(f==='doc')dl(n+'.doc','\ufeff'+wrap(bookHtml()),'application/msword');
+ else if(f==='html')dl(n+'.html',wrap(bookHtml()),'text/html;charset=utf-8');
+ else if(f==='print')window.print();
+ else navigator.clipboard?.writeText(bookTxt()).then(()=>toast('Livro copiado!'),()=>toast('Não foi possível copiar'));
+});
+
+theme(db.theme||'light');
+showLibrary();
+</script>
+</body>
+</html>
